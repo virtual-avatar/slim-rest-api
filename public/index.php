@@ -95,7 +95,7 @@ $app->put("/users/{id}", function (Request $request, Response $response, $args) 
     $findUser = $users->findUserById($request,$response);
 
     if(!empty($findUser)) {
-        $users->addUser($request,$response);
+        $users->editUser($request,$response);
         $response->getBody()->write(json_encode([
             "data" => [
             ],
