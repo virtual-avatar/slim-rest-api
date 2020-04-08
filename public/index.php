@@ -1,8 +1,11 @@
 <?php
+
+use App\Model\User\User;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use Jajo\JSONDB;
+
 
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -19,30 +22,26 @@ $app->get('/', function (Request $request, Response $response, $args ) {
 });
 
 //Отобразить все записи из БД
-$app->get('/users', function (Request $request, Response $response, $args) use ($json_db) {
+$app->get('/users', function (Request $request, Response $response, $args) {
 
-    $users = $json_db->select( '*' )
-        ->from( 'users.json' )
-        ->get();
-    $response->getBody()->write(json_encode($users,JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    $users = new User();
+    $response->getBody()->write(json_encode($users->userListAll(),JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     return $response
         ->withHeader('Content-Type', 'application/json');
 });
 
 //отобразить запись по ID
-$app->get('/users/{id}', function (Request $request, Response $response, $args) use ($json_db) {
+$app->get('/users/{id}', function (Request $request, Response $response, $args)  {
 
-    $users = $json_db->select( '*'  )
-        ->from( 'users.json' )
-        ->where( [ 'id' => $request->getAttribute('id') ] )
-        ->get();
+    $users = new User();
+    $findUser = $users->findUserById($request,$response);
 
-    if(!empty($users)) {
+    if(!empty($findUser)) {
         $response->getBody()->write(json_encode([
             "data" => [
-                "id" => $users[0]["id"],
-                "name" => $users[0]["name"],
-                "phome" => $users[0]["phone"]
+                "id" => $findUser[0]["id"],
+                "name" => $findUser[0]["name"],
+                "phome" => $findUser[0]["phone"]
             ],
             "code" => 1,
             "message" => "OK"
@@ -59,22 +58,14 @@ $app->get('/users/{id}', function (Request $request, Response $response, $args) 
 });
 
 //добавить запись в БД
-$app->post('/users', function (Request $request, Response $response, $args) use ($json_db) {
+$app->post('/users', function (Request $request, Response $response, $args) {
     $requestBody = $request->getParsedBody();
-    $users = $json_db->select( '*'  )
-        ->from( 'users.json' )
-        ->where( [ 'id' => $requestBody['id']
-            ] )
-        ->get();
 
-    if(empty($users)) {
-        $json_db->insert( 'users.json',
-            [
-                'id' => $requestBody['id'],
-                "name" => $requestBody['name'],
-                "phone" => $requestBody['phone']
-            ]
-        );
+    $users = new User();
+    $findUser = $users->findUserById($request,$response);
+
+    if(empty($findUser)) {
+        $users->addUser($request,$response);
         $response->getBody()->write(json_encode([
             "data" => [
                 "id" => $requestBody['id'],
@@ -99,21 +90,12 @@ $app->post('/users', function (Request $request, Response $response, $args) use 
 });
 //редактировать запись в БД по ID
 $app->put("/users/{id}", function (Request $request, Response $response, $args) use ($json_db) {
-    $requestBody = $request->getParsedBody();
     $id = $request->getAttribute('id');
+    $users = new User();
+    $findUser = $users->findUserById($request,$response);
 
-    $users = $json_db->select( '*'  )
-        ->from( 'users.json' )
-        ->where( [ 'id' => $id
-        ])
-        ->get();
-
-    if(!empty($users)) {
-        $json_db->update( [ 'name' => $requestBody['name'], 'phone' => $requestBody['phone'] ] )
-            ->from( 'users.json' )
-            ->where( [ 'id' =>  $id] )
-            ->trigger();
-
+    if(!empty($findUser)) {
+        $users->addUser($request,$response);
         $response->getBody()->write(json_encode([
             "data" => [
             ],
@@ -125,7 +107,7 @@ $app->put("/users/{id}", function (Request $request, Response $response, $args) 
             "data" => [
             ],
             "code" => 0,
-            "message" => "В базе не существует запись с ID=".$requestBody['id']
+            "message" => "В базе не существует запись с ID=".$id
         ],JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }
 
@@ -137,17 +119,11 @@ $app->put("/users/{id}", function (Request $request, Response $response, $args) 
 //удалить запись по ID
 $app->delete("/users/{id}", function (Request $request, Response $response, $args) use ($json_db) {
     $id = $request->getAttribute('id');
-    $users = $json_db->select( '*'  )
-        ->from( 'users.json' )
-        ->where( [ 'id' => $id
-        ])
-        ->get();
+    $users = new User();
+    $findUser = $users->findUserById($request,$response);
 
-    if(!empty($users)) {
-        $json_db->delete()
-            ->from( 'users.json' )
-            ->where( [ 'id' => $id ] )
-            ->trigger();
+    if(!empty($findUser)) {
+        $users->delUser($request,$response);
 
         $response->getBody()->write(json_encode([
             "data" => [
