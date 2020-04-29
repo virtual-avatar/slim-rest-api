@@ -13,7 +13,6 @@ require __DIR__ . '/../vendor/autoload.php';
 $app = AppFactory::create();
 $app->addBodyParsingMiddleware();
 
-$json_db = new JSONDB( __DIR__."/../src/database");
 
 //дефолтный роут
 $app->get('/', function (Request $request, Response $response, $args ) {
