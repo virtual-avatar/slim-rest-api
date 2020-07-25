@@ -45,7 +45,7 @@ composer update
 
 <ul>
     <li>Используется фреймворк SLIM v4</li>
-    <li><a target="_blank" href="https://psychogenic-thermoc.000webhostapp.com/users">Демо-версия работы сайта</a></li>
+    <!--<li><a target="_blank" href="https://psychogenic-thermoc.000webhostapp.com/users">Демо-версия работы сайта</a></li>-->
 </ul>
 
 REST API :
